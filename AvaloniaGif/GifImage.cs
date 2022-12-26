@@ -112,8 +112,8 @@ namespace AvaloniaGif
 
         public override void Render(DrawingContext context)
         {
-            Dispatcher.UIThread.Post(InvalidateMeasure, DispatcherPriority.Background);
-            Dispatcher.UIThread.Post(InvalidateVisual, DispatcherPriority.Background);
+            Dispatcher.UIThread.Post(InvalidateMeasure, DispatcherPriority.Normal);
+            Dispatcher.UIThread.Post(InvalidateVisual, DispatcherPriority.Normal);
             
             if (_hasNewSource)
             {
