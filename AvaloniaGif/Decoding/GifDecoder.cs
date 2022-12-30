@@ -6,6 +6,8 @@
 // The rest of the source file is licensed under MIT License.
 // Copyright (C) 2018 Jumar A. Macato, All Rights Reserved.
 
+using Avalonia;
+using Avalonia.Media.Imaging;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -15,8 +17,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using Avalonia;
-using Avalonia.Media.Imaging;
 using static AvaloniaGif.Extensions.StreamExtensions;
 
 namespace AvaloniaGif.Decoding
@@ -50,6 +50,7 @@ namespace AvaloniaGif.Decoding
 
         // private ulong _globalColorTable;
         private readonly int _backBufferBytes;
+
         private GifColor[] _bitmapBackBuffer;
 
         private short[] _prefixBuf;
@@ -114,7 +115,7 @@ namespace AvaloniaGif.Decoding
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int PixCoord(int x, int y) => x + (y * _gifDimensions.Width);
 
-        static readonly (int Start, int Step)[] Pass =
+        private static readonly (int Start, int Step)[] Pass =
         {
             (0, 8),
             (4, 8),
@@ -158,7 +159,7 @@ namespace AvaloniaGif.Decoding
                     continue;
 
                 if (prevFrame.FrameDisposalMethod == FrameDisposal.Background)
-                { 
+                {
                     ClearArea(prevFrame.Dimensions);
                     continue;
                 }
@@ -193,7 +194,6 @@ namespace AvaloniaGif.Decoding
 
             ArrayPool<byte>.Shared.Return(tmpB);
         }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DrawFrame(GifFrame curFrame, Memory<byte> frameIndexSpan)
@@ -265,6 +265,7 @@ namespace AvaloniaGif.Decoding
                 case FrameDisposal.Background:
                     ClearArea(prevFrame.Dimensions);
                     break;
+
                 case FrameDisposal.Restore:
                     if (_hasFrameBackups && _backupFrame != -1)
                         DrawFrame(Frames[_backupFrame], _backupFrameIndexBuf);
@@ -468,7 +469,7 @@ namespace AvaloniaGif.Decoding
 
         /// <summary>
         /// Parses colors from file stream to target color table.
-        /// </summary> 
+        /// </summary>
         private static GifColor[] ProcessColorTable(ref Stream stream, byte[] rawBufSpan, int nColors)
         {
             var nBytes = 3 * nColors;
@@ -493,7 +494,7 @@ namespace AvaloniaGif.Decoding
         }
 
         /// <summary>
-        /// Parses screen and other GIF descriptors. 
+        /// Parses screen and other GIF descriptors.
         /// </summary>
         private void ProcessScreenDescriptor(byte[] tempBuf)
         {
