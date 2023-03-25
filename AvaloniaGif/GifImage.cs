@@ -42,14 +42,40 @@ namespace AvaloniaGif
 
         static GifImage()
         {
-            SourceUriRawProperty.Changed.Subscribe(SourceChanged);
-            SourceUriProperty.Changed.Subscribe(SourceChanged);
-            SourceStreamProperty.Changed.Subscribe(SourceChanged);
-            IterationCountProperty.Changed.Subscribe(IterationCountChanged);
-            AutoStartProperty.Changed.Subscribe(AutoStartChanged);
+            SourceUriRawProperty.Changed.Subscribe(CreateObserver<string>(SourceChanged));
+            SourceUriProperty.Changed.Subscribe(CreateObserver<Uri>(SourceChanged));
+            SourceStreamProperty.Changed.Subscribe(CreateObserver<Stream>(SourceChanged));
+            IterationCountProperty.Changed.Subscribe(CreateObserver<IterationCount>(IterationCountChanged));
+            AutoStartProperty.Changed.Subscribe(CreateObserver<bool>(AutoStartChanged));
             AffectsRender<GifImage>(SourceStreamProperty, SourceUriProperty, SourceUriRawProperty, StretchProperty);
             AffectsArrange<GifImage>(SourceStreamProperty, SourceUriProperty, SourceUriRawProperty, StretchProperty);
             AffectsMeasure<GifImage>(SourceStreamProperty, SourceUriProperty, SourceUriRawProperty, StretchProperty);
+        }
+
+        private static IObserver<AvaloniaPropertyChangedEventArgs<T>> CreateObserver<T>(Action<AvaloniaPropertyChangedEventArgs> action)
+        {
+            return new PropertyChangedObserver<T>
+            {
+                OnNext = action
+            };
+        }
+
+        private class PropertyChangedObserver<T> : IObserver<AvaloniaPropertyChangedEventArgs<T>>
+        {
+            public Action<AvaloniaPropertyChangedEventArgs> OnNext { get; set; }
+
+            void IObserver<AvaloniaPropertyChangedEventArgs<T>>.OnNext(AvaloniaPropertyChangedEventArgs<T> value)
+            {
+                OnNext?.Invoke(value);
+            }
+
+            void IObserver<AvaloniaPropertyChangedEventArgs<T>>.OnError(Exception error)
+            {
+            }
+
+            void IObserver<AvaloniaPropertyChangedEventArgs<T>>.OnCompleted()
+            {
+            }
         }
 
         public string SourceUriRaw
@@ -143,9 +169,11 @@ namespace AvaloniaGif
 
             if (currentFrame is { } source && backingRTB is { })
             {
-                using var ctx = backingRTB.CreateDrawingContext(null);
+                using var ctx = backingRTB.CreateDrawingContext();
                 var ts = new Rect(source.Size);
-                ctx.DrawBitmap(source.PlatformImpl, 1, ts, ts);
+                var ms = new MemoryStream();
+                source.Save(ms);
+                ctx.DrawImage(new Bitmap(ms), ts, ts);
             }
 
             if (backingRTB is not null && Bounds.Width > 0 && Bounds.Height > 0)
